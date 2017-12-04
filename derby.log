@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Mon Dec 04 20:59:37 CET 2017:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.2.0 - (1582446): instance a816c00e-0160-231c-c69b-00000bf47a20 
-on database directory /home/jelguero/spark-project/bigData/metastore_db with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@5f18f9d2 
+Tue Dec 05 00:27:23 CET 2017:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.2.0 - (1582446): instance a816c00e-0160-23db-0137-000008dd5378 
+on database directory /home/jelguero/spark-project/bigData/metastore_db with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@2264e43c 
 Loaded from file:/home/jelguero/.ivy2/cache/org.apache.derby/derby/jars/derby-10.10.2.0.jar
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_151-8u151-b12-0ubuntu0.16.04.2-b12

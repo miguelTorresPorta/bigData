@@ -5,6 +5,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
 
 object bigDataTest {
 
@@ -136,41 +137,17 @@ object bigDataTest {
     }
     var conv_UniqueCarrier_udf = udf(conv_UniqueCarrier _)
 
+    /*
+
     def deconv_UniqueCarrier (code : Int) : String = {
       var name = deMap_UniqueCarrier(code)
       return name
     }
     var deconv_UniqueCarrier_udf = udf(deconv_UniqueCarrier _)
 
-    df = df.withColumn("UniqueCarrier", conv_UniqueCarrier_udf(col("UniqueCarrier")))
-
-    // TailNum
-
-    /*
-    val all_TailNum = df.select("TailNum").distinct.rdd.map((r: Row) => r.getString(0)).collect
-    var Map_TailNum = scala.collection.mutable.Map[String, Int]()
-    var deMap_TailNum = scala.collection.mutable.Map[Int, String]()
-    index = 0
-    for (i <- 0 until all_TailNum.length) {
-      Map_TailNum += (all_TailNum(i) -> index)
-      deMap_TailNum += (index -> all_TailNum(i))
-      index += 1
-    }
-
-    def conv_TailNum (name : String) : Int = {
-      var code = Map_TailNum(name)
-      return code
-    }
-    val conv_TailNum_udf = udf(conv_TailNum _)
-
-    def deconv_TailNum(code : Int) : String = {
-      var name = deMap_TailNum(code)
-      return name
-    }
-    val deconv_TailNum_udf = udf(deconv_TailNum _)
-
-    df = df.withColumn("TailNum", conv_TailNum_udf(col("TailNum")))
     */
+
+    df = df.withColumn("UniqueCarrier", conv_UniqueCarrier_udf(col("UniqueCarrier")))
 
     // Origin
 
@@ -190,11 +167,15 @@ object bigDataTest {
     }
     var conv_Origin_udf = udf(conv_Origin _)
 
+    /*
+
     def deconv_Origin (code : Int) : String = {
       var name = deMap_Origin(code)
       return name
     }
     var deconv_Origin_udf = udf(deconv_Origin _)
+
+    */
 
     df = df.withColumn("Origin", conv_Origin_udf(col("Origin")))
 
@@ -216,11 +197,15 @@ object bigDataTest {
     }
     var conv_Dest_udf = udf(conv_Dest _)
 
+    /*
+
     def deconv_Dest (code : Int) : String = {
       var name = deMap_Dest(code)
       return name
     }
     var deconv_Dest_udf = udf(deconv_Dest _)
+
+    */
 
     df = df.withColumn("Dest", conv_Dest_udf(col("Dest")))
 
@@ -236,6 +221,8 @@ object bigDataTest {
     }
     var hhmmToMinutes_udf =udf(hhmmToMinutes _)
 
+    /*
+
     def MinutesToHHMM (Minutes : Int) : Int = {
       var HHMM = Minutes
       if (Minutes > 60) {
@@ -244,6 +231,8 @@ object bigDataTest {
       return HHMM
     }
     var MinutesToHHMM_udf = udf(MinutesToHHMM _)
+
+    */
 
     df = df.withColumn("DepTime", hhmmToMinutes_udf(col("DepTime")))
     df = df.withColumn("CRSDepTime", hhmmToMinutes_udf(col("CRSDepTime")))
@@ -254,8 +243,8 @@ object bigDataTest {
     df = df.withColumn("CRSArrTimeOrigin", col("CRSDepTime") + col("CRSElapsedTime"))
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //////////                                           TEST AREA                                           //////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // MODEL CREATION
 
     var df2 = df.select(
       df.col("Month"),
@@ -303,33 +292,32 @@ object bigDataTest {
       .setStages(Array(assembler, lr))
 
     val model = pipeline.fit(training)
-    model.transform(test).show(truncate = false)
+    model.transform(test)//.show(truncate = false)
 
     var df3 = model.transform(test)
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // MODEL EVALUATION
+
+    // ERROR = ArrDelay - prediction
     df3 = df3.withColumn("error", abs(col("ArrDelay") - col("prediction")))
 
-    df3.select(avg(col("error"))).show()
-    df3.select(max(col("error"))).show()
-    df3.select(min(col("error"))).show()
+    df3.select(avg(col("error"))).show() // Avg. Error = 9.255627202272636 minutes
+    df3.select(max(col("error"))).show() // Max. Error = 1038.015245074952 minutes
+    df3.select(min(col("error"))).show() // Min. Error = 9.232469142972377E-6 minutes
 
-    df3.show()
+    val evaluator = new RegressionEvaluator()
+      .setLabelCol("ArrDelay")
+      .setPredictionCol("prediction")
 
-    //    val lrModel = lr.fit(output)
-    //
-    //    println(s"Coefficients: ${lrModel.coefficients}")
-    //    println(s"Intercept: ${lrModel.intercept}")
-    //
-    //    val trainingSummary = lrModel.summary
-    //    println(s"numIterations: ${trainingSummary.totalIterations}")
-    //    println(s"objectiveHistory: ${trainingSummary.objectiveHistory.toList}")
-    //    trainingSummary.residuals.show()
-    //    println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
-    //    println(s"r2: ${trainingSummary.r2}")
+    // Root Mean Square Error
+    val rmse = evaluator.setMetricName("rmse").evaluate(df3) // rmse = 13.913056017643722
+    println("Root Mean Square Error (RMSE) = " + rmse)
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //////////                                              END                                              //////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Coefficient of Determination
+    val r2 = evaluator.setMetricName("r2").evaluate(df3) // r2 = 0.869393116810725
+    println("r2 = " + r2)
 
   }
 
