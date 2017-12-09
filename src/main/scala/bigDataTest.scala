@@ -175,6 +175,10 @@ object bigDataTest {
     val r2 = evaluator.setMetricName("r2").evaluate(df3) // r2 = 0.869393116810725
     println("\nr2 = " + r2)
 
+    val endTime = System.currentTimeMillis()
+    val totalTime = endTime - startTime
+    println("Total execution time " + totalTime/1000 + " minutes" )
+
   }
 
 
