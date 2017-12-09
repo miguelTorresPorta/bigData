@@ -177,7 +177,7 @@ object bigDataTest {
 
     val endTime = System.currentTimeMillis()
     val totalTime = endTime - startTime
-    println("Total execution time " + totalTime/1000 + " minutes" )
+    println("Total execution time " + (totalTime/1000)/60 + " minutes" )
 
   }
 
