@@ -4,7 +4,6 @@ import org.apache.spark.sql.{Column, DataFrame}
 object Tools {
 
 
-
   def hhmmToMinutes (hhmm : Column) : Column = {
     val hh = (hhmm/100) - ((hhmm/100)%1)
     val min = (hh) * 60 + (hhmm % 100)
@@ -20,5 +19,11 @@ object Tools {
 
     return indexer.fit(df).transform(df)
   }
+
+  def joinColumns(a: Column, b: Column): Column = {
+    return a + ("") + b
+
+  }
+
 
 }

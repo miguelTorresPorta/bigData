@@ -7,7 +7,7 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
-object bigDataTest {
+object bigData {
 
   def main (args: Array[String]){
 
@@ -67,6 +67,7 @@ object bigDataTest {
       df.col("Distance").cast("int")
     )
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // DATA CLEANSING
@@ -74,9 +75,37 @@ object bigDataTest {
     // Remove rows containing NAs - 154,704 rows removed
     df = df.na.drop
 
+
+    // Month - 0 rows removed
+    val Month = 1 to 12
+    df = df.filter(df.col("Month").isin(Month : _*))
+    // Day of Month - 0 rows removed
+    val DayofMonth = 1 to 31
+    df = df.filter(df.col("DayofMonth").isin(DayofMonth : _*))
+    // Day of Week - 0 rows removed
+    val DayOfWeek = 1 to 7
+    df = df.filter(df.col("DayOfWeek").isin(DayOfWeek : _*))
+    // Departure Time - 0 rows removed
+    df.select(max("DepTime")).show // DepTime Max = 2400
+    df.select(min("DepTime")).show // DepTime Min = 1
+    var DepTime  = 1 to 59 toList;
+    for (h <- 1 to 23; m <- 0 to 59){
+      var time = h * 100 + m
+      DepTime :+= time
+    }
+    DepTime :+= 2400
+    df = df.filter(col("DepTime").isin(DepTime : _*))
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // DATA TRANSFORMATIONS
+
+    // Put together Day of month and Month
+
+    df = df.withColumn("DayMonth", concat(df.col("DayOfMonth"), df.col("Month")))
+    df = Tools.indexer("DayMonth", "DayMonthIndex", df)
+
 
     // Transform categorical variables into nominal
 
@@ -95,13 +124,14 @@ object bigDataTest {
       .withColumn("CRSArrtime", Tools.hhmmToMinutes(col("CRSArrtime")))
       .withColumn("CRSArrTimeOrigin", col("CRSDepTime") + col("CRSElapsedTime"))
 
+    df.show()
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // MODEL CREATION
 
     val df2 = df.select(
       df.col("Month"),
-      df.col("DayofMonth"),
+      df.col("DayMonthIndex"),
       df.col("DayOfWeek"),
       df.col("CRSDepTime"),
       df.col("CRSArrTime"),
@@ -123,7 +153,7 @@ object bigDataTest {
     val assembler = new VectorAssembler()
       .setInputCols(Array(
         "Month",
-        "DayofMonth",
+        "DayMonthIndex",
         "DayOfWeek",
         "CRSDepTime",
         "CRSArrTime",
@@ -180,8 +210,5 @@ object bigDataTest {
     println("Total execution time " + (totalTime/1000)/60 + " minutes" )
 
   }
-
-
-
 
 }
